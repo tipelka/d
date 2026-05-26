@@ -13,21 +13,21 @@ def db(): return pymysql.connect(**DB)
 class Login(QDialog):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Вход")
+        self.setWindowTitle("Bxod")
         self.setModal(True)
         layout = QVBoxLayout(self)
 
         self.user = QLineEdit()
-        self.user.setPlaceholderText("Логин")
+        self.user.setPlaceholderText("Login")
 
         self.passw = QLineEdit()
-        self.passw.setPlaceholderText("Пароль")
+        self.passw.setPlaceholderText("Password")
         self.passw.setEchoMode(QLineEdit.EchoMode.Password)
 
-        btn = QPushButton("Войти")
+        btn = QPushButton("Bойти")
         btn.clicked.connect(self.check)
 
-        guest_btn = QPushButton("Войти как гость")
+        guest_btn = QPushButton("Гость")
         guest_btn.clicked.connect(self.guest_login)
 
         layout.addWidget(self.user)
@@ -40,7 +40,7 @@ class Login(QDialog):
         self.role_id = None
 
     def guest_login(self):
-        self.role_id = 3  # Гость
+        self.role_id = 3
         self.user_id = None
         self.username = "Гость"
         self.accept()
@@ -60,194 +60,26 @@ class Login(QDialog):
         self.role_id = u['role_id']
         self.user_id = u['user_id']
         self.username = u['username']
-
         self.accept()
-
-
-class ProductDialog(QDialog):
-    def __init__(self, product_data=None, parent=None):
-        super().__init__(parent)
-        self.product_data = product_data
-        self.setWindowTitle("Добавление товара" if not product_data else "Редактирование товара")
-        self.setModal(True)
-        self.resize(400, 500)
-
-        layout = QVBoxLayout(self)
-
-        # Название товара
-        layout.addWidget(QLabel("Название товара:"))
-        self.name_edit = QLineEdit()
-        layout.addWidget(self.name_edit)
-
-        # Цена
-        layout.addWidget(QLabel("Цена:"))
-        self.price_edit = QLineEdit()
-        layout.addWidget(self.price_edit)
-
-        # Скидка
-        layout.addWidget(QLabel("Скидка (%):"))
-        self.discount_edit = QLineEdit()
-        layout.addWidget(self.discount_edit)
-
-        # Количество
-        layout.addWidget(QLabel("Количество в наличии:"))
-        self.stock_edit = QLineEdit()
-        layout.addWidget(self.stock_edit)
-
-        # Единица измерения
-        layout.addWidget(QLabel("Единица измерения:"))
-        self.unit_edit = QLineEdit()
-        layout.addWidget(self.unit_edit)
-
-        # Поставщик
-        layout.addWidget(QLabel("Поставщик:"))
-        self.supplier_combo = QComboBox()
-        self.load_suppliers()
-        layout.addWidget(self.supplier_combo)
-
-        # Производитель
-        layout.addWidget(QLabel("Производитель:"))
-        self.manufacturer_combo = QComboBox()
-        self.load_manufacturers()
-        layout.addWidget(self.manufacturer_combo)
-
-        # Описание
-        layout.addWidget(QLabel("Описание:"))
-        self.description_edit = QTextEdit()
-        layout.addWidget(self.description_edit)
-
-        # Путь к изображению
-        layout.addWidget(QLabel("Путь к изображению:"))
-        image_layout = QHBoxLayout()
-        self.image_edit = QLineEdit()
-        image_layout.addWidget(self.image_edit)
-        browse_btn = QPushButton("Обзор...")
-        browse_btn.clicked.connect(self.browse_image)
-        image_layout.addWidget(browse_btn)
-        layout.addLayout(image_layout)
-
-        # Кнопки
-        buttons = QHBoxLayout()
-        save_btn = QPushButton("Сохранить")
-        save_btn.clicked.connect(self.accept)
-        cancel_btn = QPushButton("Отмена")
-        cancel_btn.clicked.connect(self.reject)
-        buttons.addWidget(save_btn)
-        buttons.addWidget(cancel_btn)
-        layout.addLayout(buttons)
-
-        if product_data:
-            self.load_product_data()
-
-    def load_suppliers(self):
-        try:
-            c = db()
-            cur = c.cursor()
-            cur.execute("SELECT supplier_id, supplier_name FROM suppliers")
-            suppliers = cur.fetchall()
-            c.close()
-            for sup in suppliers:
-                self.supplier_combo.addItem(sup['supplier_name'], sup['supplier_id'])
-        except Exception as e:
-            print(f"Ошибка загрузки поставщиков: {e}")
-
-    def load_manufacturers(self):
-        try:
-            c = db()
-            cur = c.cursor()
-            cur.execute("SELECT manufacturer_id, manufacturer_name FROM manufacturers")
-            manufacturers = cur.fetchall()
-            c.close()
-            for man in manufacturers:
-                self.manufacturer_combo.addItem(man['manufacturer_name'], man['manufacturer_id'])
-        except Exception as e:
-            print(f"Ошибка загрузки производителей: {e}")
-
-    def browse_image(self):
-        file_path, _ = QFileDialog.getOpenFileName(self, "Выберите изображение", "",
-                                                   "Image Files (*.png *.jpg *.jpeg *.bmp)")
-        if file_path:
-            self.image_edit.setText(file_path)
-
-    def load_product_data(self):
-        self.name_edit.setText(self.product_data.get('name', ''))
-        self.price_edit.setText(str(self.product_data.get('price', '')))
-        self.discount_edit.setText(str(self.product_data.get('discount', 0)))
-        self.stock_edit.setText(str(self.product_data.get('stock', 0)))
-        self.unit_edit.setText(self.product_data.get('unit', 'шт'))
-        self.description_edit.setText(self.product_data.get('description', ''))
-        self.image_edit.setText(self.product_data.get('image_path', ''))
-
-        # Выбираем поставщика
-        supplier_name = self.product_data.get('supplier')
-        if supplier_name:
-            index = self.supplier_combo.findText(supplier_name)
-            if index >= 0:
-                self.supplier_combo.setCurrentIndex(index)
-
-        # Выбираем производителя
-        manufacturer_name = self.product_data.get('manufacturer')
-        if manufacturer_name:
-            index = self.manufacturer_combo.findText(manufacturer_name)
-            if index >= 0:
-                self.manufacturer_combo.setCurrentIndex(index)
-
-    def get_product_data(self):
-        return {
-            'name': self.name_edit.text(),
-            'price': float(self.price_edit.text()) if self.price_edit.text() else 0,
-            'discount': int(self.discount_edit.text()) if self.discount_edit.text() else 0,
-            'stock': int(self.stock_edit.text()) if self.stock_edit.text() else 0,
-            'unit': self.unit_edit.text(),
-            'description': self.description_edit.toPlainText(),
-            'image_path': self.image_edit.text(),
-            'supplier_id': self.supplier_combo.currentData(),
-            'manufacturer_id': self.manufacturer_combo.currentData()
-        }
 
 
 class ClientWindow(QMainWindow):
     def __init__(s, username):
         super().__init__()
         s.username = username
-        s.setWindowTitle(f"Магазин (Пользователь: {username})")
+        s.setWindowTitle(f"Магазин ({username})")
         s.resize(1200, 750)
         w = QWidget()
         s.setCentralWidget(w)
         l = QVBoxLayout(w)
 
-        c = db()
-        cur = c.cursor()
-        cur.execute("SELECT user_id FROM users WHERE username=%s", (username,))
-        result = cur.fetchone()
-        s.user_id = result['user_id'] if result else None
-        c.close()
-
         s.scroll = QScrollArea()
         s.scroll.setWidgetResizable(True)
         w2 = QWidget()
-
         s.grid = QVBoxLayout(w2)
         s.scroll.setWidget(w2)
         l.addWidget(s.scroll)
         s.load()
-
-    def add_to_cart(s, product_id, product_name, price):
-        try:
-            c = db()
-            cur = c.cursor()
-            cur.execute("INSERT INTO orders (user_id, status_id, total_amount) VALUES (%s, 1, %s)",
-                        (s.user_id, float(price)))
-            order_id = cur.lastrowid
-
-            cur.execute(
-                "INSERT INTO order_items (order_id, product_id, quantity, price_per_item) VALUES (%s, %s, 1, %s)",
-                (order_id, product_id, float(price)))
-            c.commit()
-            c.close()
-            QMessageBox.information(s, "Добавлено!", f"Товар '{product_name}' добавлен в заказ №{order_id}")
-        except Exception as e:
-            QMessageBox.warning(s, "Ошибка", f"Не удалось добавить товар: {e}")
 
     def load(s):
         while s.grid.count():
@@ -256,8 +88,7 @@ class ClientWindow(QMainWindow):
 
         c = db()
         cur = c.cursor()
-
-        query = """
+        cur.execute("""
             SELECT 
                 p.product_id,
                 p.product_name as name,
@@ -266,44 +97,38 @@ class ClientWindow(QMainWindow):
                 p.stock,
                 p.unit,
                 p.image_path,
-                p.description,
                 s.supplier_name as supplier,
                 m.manufacturer_name as manufacturer
             FROM products p
             LEFT JOIN suppliers s ON p.supplier_id = s.supplier_id
             LEFT JOIN manufacturers m ON p.manufacturer_id = m.manufacturer_id
-            WHERE 1=1
-        """
-        params = []
-
-        cur.execute(query, params)
+        """)
         products = cur.fetchall()
         c.close()
 
         for p in products:
             card = QFrame()
-            card.setStyleSheet("background:white; border:1px solid #ddd; padding:10px; ")
+            card.setStyleSheet("background:white; border:1px solid #ddd; padding:10px; margin:5px;")
             layout = QHBoxLayout(card)
 
             img = QLabel()
             img.setFixedSize(100, 100)
             img.setAlignment(Qt.AlignmentFlag.AlignCenter)
             img.setStyleSheet("background:#f0f0f0; border:1px solid #ccc; color: black;")
-
             if p.get('image_path') and os.path.exists(p['image_path']):
                 pm = QPixmap(p['image_path'])
                 pm = pm.scaled(100, 100, Qt.AspectRatioMode.KeepAspectRatio)
                 img.setPixmap(pm)
             else:
-                img.setText("НЕТ ФОТО")
+                img.setText("HET ФОТО")
             layout.addWidget(img)
 
             info = QVBoxLayout()
-            info.addWidget(QLabel(f"<b style='color:black;'> {p['name']} </b>"))
-            info.addWidget(QLabel(f"<span style='color:black;'> Поставщик: {p.get('supplier', '-')} </span>"))
-            info.addWidget(QLabel(f"<span style='color:black;'> Производитель: {p.get('manufacturer', '-')} </span>"))
-            info.addWidget(QLabel(f"<span style='color:black;'> В наличии: {p.get('stock', 0)} </span>"))
-            info.addWidget(QLabel(f"<span style='color:black;'> Ед.:{p.get('unit', 'шт')}. </span>"))
+            info.addWidget(QLabel(f"<b style='color:black;'>{p['name']}</b>"))
+            info.addWidget(QLabel(f"<span style='color:black;'>Поставщик: {p.get('supplier', '-')}</span>"))
+            info.addWidget(QLabel(f"<span style='color:black;'>Производитель: {p.get('manufacturer', '-')}</span>"))
+            info.addWidget(
+                QLabel(f"<span style='color:black;'>В наличии: {p.get('stock', 0)} {p.get('unit', 'шт')}</span>"))
             layout.addLayout(info)
 
             right = QVBoxLayout()
@@ -313,23 +138,14 @@ class ClientWindow(QMainWindow):
 
             if discount > 15:
                 right.addWidget(QLabel(f"<b style='background:#dc3545; color:white;'> -{discount}% </b>"))
-                right.addWidget(QLabel(f"<s style='color:black;'>{price:.2f} ₽</s>"))
-                right.addWidget(QLabel(f"<b style='color:red;'>{final_price:.2f} ₽</b>"))
+                right.addWidget(QLabel(f"<s style='color:black;'>{price:.2f} rub</s>"))
+                right.addWidget(QLabel(f"<b style='color:red;'>{final_price:.2f} rub</b>"))
             elif discount > 0:
                 right.addWidget(QLabel(f"<b style='background:#2E8B57; color:white;'>-{discount}%</b>"))
-                right.addWidget(QLabel(f"<s style='color:#2E8B57;'>{price:.2f} ₽</s>"))
-                right.addWidget(QLabel(f"<b style='color:#2E8B57;'>{final_price:.2f} ₽</b>"))
+                right.addWidget(QLabel(f"<s style='color:#2E8B57;'>{price:.2f} rub</s>"))
+                right.addWidget(QLabel(f"<b style='color:#2E8B57;'>{final_price:.2f} rub</b>"))
             else:
-                right.addWidget(QLabel(f"<b style='color:green;'>{price:.2f} ₽</b>"))
-
-            if p.get('stock', 0) > 0:
-                btn = QPushButton("🛒 В корзину")
-                btn.setStyleSheet('background: #28a745; color: white;')
-                btn.clicked.connect(lambda ch, pid=p['product_id'], name=p['name'], fprice=final_price:
-                                    s.add_to_cart(pid, name, fprice))
-                right.addWidget(btn)
-            else:
-                right.addWidget(QLabel("<b style='color:red;'> Нет в наличии</b>"))
+                right.addWidget(QLabel(f"<b style='color:green;'>{price:.2f} rub</b>"))
 
             layout.addLayout(right)
             s.grid.addWidget(card)
@@ -340,28 +156,20 @@ class ManagerWindow(QMainWindow):
     def __init__(s, username):
         super().__init__()
         s.username = username
-        s.setWindowTitle(f"Магазин - Менеджер ({username})")
+        s.setWindowTitle(f"Менеджер ({username})")
         s.resize(1200, 750)
         w = QWidget()
         s.setCentralWidget(w)
         l = QVBoxLayout(w)
 
-        c = db()
-        cur = c.cursor()
-        cur.execute("SELECT user_id FROM users WHERE username=%s", (username,))
-        result = cur.fetchone()
-        s.user_id = result['user_id'] if result else None
-        c.close()
-
-        # Панель фильтров как у админа
         filter_panel = QHBoxLayout()
         s.srch = QLineEdit()
-        s.srch.setPlaceholderText(" Поиск...")
+        s.srch.setPlaceholderText("Поиск...")
         s.srch.textChanged.connect(s.load)
         filter_panel.addWidget(s.srch)
 
         s.sort_combo = QComboBox()
-        s.sort_combo.addItems(["По умолчанию", "По количеству ↑", "По количеству ↓"])
+        s.sort_combo.addItems(["По умолчанию", "По количеству +", "По количеству -"])
         s.sort_combo.currentTextChanged.connect(s.load)
         filter_panel.addWidget(QLabel("Сортировка:"))
         filter_panel.addWidget(s.sort_combo)
@@ -393,8 +201,8 @@ class ManagerWindow(QMainWindow):
             for sup in suppliers:
                 if sup['supplier']:
                     s.supplier_filter_combo.addItem(sup['supplier'])
-        except Exception as e:
-            print(f"Ошибка загрузки поставщиков: {e}")
+        except:
+            pass
 
     def load(s):
         while s.grid.count():
@@ -414,7 +222,6 @@ class ManagerWindow(QMainWindow):
                 p.stock,
                 p.unit,
                 p.image_path,
-                p.description,
                 s.supplier_name as supplier,
                 m.manufacturer_name as manufacturer
             FROM products p
@@ -433,22 +240,14 @@ class ManagerWindow(QMainWindow):
             query += " AND s.supplier_name = %s"
             params.append(supplier_filter)
 
-        sort_text = s.sort_combo.currentText()
-        if sort_text == "По количеству ↑":
+        if s.sort_combo.currentText() == "По количеству +":
             query += " ORDER BY p.stock ASC"
-        elif sort_text == "По количеству ↓":
+        elif s.sort_combo.currentText() == "По количеству -":
             query += " ORDER BY p.stock DESC"
 
         cur.execute(query, params)
         products = cur.fetchall()
         c.close()
-
-        if not products:
-            lbl = QLabel("Товары не найдены")
-            lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            lbl.setStyleSheet("color: black;")
-            s.grid.addWidget(lbl)
-            return
 
         for p in products:
             card = QFrame()
@@ -459,21 +258,20 @@ class ManagerWindow(QMainWindow):
             img.setFixedSize(100, 100)
             img.setAlignment(Qt.AlignmentFlag.AlignCenter)
             img.setStyleSheet("background:#f0f0f0; border:1px solid #ccc; color: black;")
-
             if p.get('image_path') and os.path.exists(p['image_path']):
                 pm = QPixmap(p['image_path'])
                 pm = pm.scaled(100, 100, Qt.AspectRatioMode.KeepAspectRatio)
                 img.setPixmap(pm)
             else:
-                img.setText("НЕТ ФОТО")
+                img.setText("HET ФОТО")
             layout.addWidget(img)
 
             info = QVBoxLayout()
-            info.addWidget(QLabel(f"<b style='color:black;'> {p['name']} </b>"))
-            info.addWidget(QLabel(f"<span style='color:black;'> Поставщик: {p.get('supplier', '-')} </span>"))
-            info.addWidget(QLabel(f"<span style='color:black;'> Производитель: {p.get('manufacturer', '-')} </span>"))
-            info.addWidget(QLabel(f"<span style='color:black;'> В наличии: {p.get('stock', 0)} </span>"))
-            info.addWidget(QLabel(f"<span style='color:black;'> Ед.:{p.get('unit', 'шт')}. </span>"))
+            info.addWidget(QLabel(f"<b style='color:black;'>{p['name']}</b>"))
+            info.addWidget(QLabel(f"<span style='color:black;'>Поставщик: {p.get('supplier', '-')}</span>"))
+            info.addWidget(QLabel(f"<span style='color:black;'>Производитель: {p.get('manufacturer', '-')}</span>"))
+            info.addWidget(
+                QLabel(f"<span style='color:black;'>В наличии: {p.get('stock', 0)} {p.get('unit', 'шт')}</span>"))
             layout.addLayout(info)
 
             right = QVBoxLayout()
@@ -483,14 +281,14 @@ class ManagerWindow(QMainWindow):
 
             if discount > 15:
                 right.addWidget(QLabel(f"<b style='background:#dc3545; color:white;'> -{discount}% </b>"))
-                right.addWidget(QLabel(f"<s style='color:black;'>{price:.2f} ₽</s>"))
-                right.addWidget(QLabel(f"<b style='color:red;'>{final_price:.2f} ₽</b>"))
+                right.addWidget(QLabel(f"<s style='color:black;'>{price:.2f} rub</s>"))
+                right.addWidget(QLabel(f"<b style='color:red;'>{final_price:.2f} rub</b>"))
             elif discount > 0:
                 right.addWidget(QLabel(f"<b style='background:#2E8B57; color:white;'>-{discount}%</b>"))
-                right.addWidget(QLabel(f"<s style='color:#2E8B57;'>{price:.2f} ₽</s>"))
-                right.addWidget(QLabel(f"<b style='color:#2E8B57;'>{final_price:.2f} ₽</b>"))
+                right.addWidget(QLabel(f"<s style='color:#2E8B57;'>{price:.2f} rub</s>"))
+                right.addWidget(QLabel(f"<b style='color:#2E8B57;'>{final_price:.2f} rub</b>"))
             else:
-                right.addWidget(QLabel(f"<b style='color:green;'>{price:.2f} ₽</b>"))
+                right.addWidget(QLabel(f"<b style='color:green;'>{price:.2f} rub</b>"))
 
             layout.addLayout(right)
             s.grid.addWidget(card)
@@ -501,27 +299,24 @@ class AdminWindow(QMainWindow):
     def __init__(s, username):
         super().__init__()
         s.username = username
-        s.setWindowTitle(f"Магазин - Администратор ({username})")
+        s.setWindowTitle(f"Админ ({username})")
         s.resize(1200, 750)
-        w = QWidget()
-        s.setCentralWidget(w)
-        l = QVBoxLayout(w)
 
-        c = db()
-        cur = c.cursor()
-        cur.execute("SELECT user_id FROM users WHERE username=%s", (username,))
-        result = cur.fetchone()
-        s.user_id = result['user_id'] if result else None
-        c.close()
+        central = QWidget()
+        s.setCentralWidget(central)
+        main_layout = QHBoxLayout(central)
+
+        left_widget = QWidget()
+        left_layout = QVBoxLayout(left_widget)
 
         filter_panel = QHBoxLayout()
         s.srch = QLineEdit()
-        s.srch.setPlaceholderText(" Поиск...")
+        s.srch.setPlaceholderText("Поиск...")
         s.srch.textChanged.connect(s.load)
         filter_panel.addWidget(s.srch)
 
         s.sort_combo = QComboBox()
-        s.sort_combo.addItems(["По умолчанию", "По количеству ↑", "По количеству ↓"])
+        s.sort_combo.addItems(["По умолчанию", "По количеству +", "По количеству -"])
         s.sort_combo.currentTextChanged.connect(s.load)
         filter_panel.addWidget(QLabel("Сортировка:"))
         filter_panel.addWidget(s.sort_combo)
@@ -533,19 +328,50 @@ class AdminWindow(QMainWindow):
         filter_panel.addWidget(QLabel("Поставщик:"))
         filter_panel.addWidget(s.supplier_filter_combo)
 
-        btn_add = QPushButton("➕ Новый товар")
-        btn_add.setStyleSheet('background: #28a745; color: white;')
+        btn_add = QPushButton("Добавить товар")
+        btn_add.setStyleSheet('background: #28a745; color: white; padding: 5px;')
         btn_add.clicked.connect(s.add_product)
         filter_panel.addWidget(btn_add)
 
-        l.addLayout(filter_panel)
+        left_layout.addLayout(filter_panel)
 
         s.scroll = QScrollArea()
         s.scroll.setWidgetResizable(True)
         w2 = QWidget()
         s.grid = QVBoxLayout(w2)
         s.scroll.setWidget(w2)
-        l.addWidget(s.scroll)
+        left_layout.addWidget(s.scroll)
+
+        right_panel = QWidget()
+        right_panel.setFixedWidth(200)
+        right_layout = QVBoxLayout(right_panel)
+
+        right_layout.addStretch()
+        right_layout.addWidget(QLabel("<b>Действия</b>"))
+        right_layout.addWidget(QLabel("Выберите товар"))
+
+        s.selected_id = None
+        s.selected_name = None
+        s.selected_price = None
+        s.selected_discount = None
+        s.selected_stock = None
+        s.selected_unit = None
+
+        btn_edit = QPushButton("Редактировать")
+        btn_edit.setStyleSheet("background: #007bff; color: white; padding: 10px;")
+        btn_edit.clicked.connect(s.edit_selected)
+        right_layout.addWidget(btn_edit)
+
+        btn_delete = QPushButton("Удалить")
+        btn_delete.setStyleSheet("background: #dc3545; color: white; padding: 10px;")
+        btn_delete.clicked.connect(s.delete_selected)
+        right_layout.addWidget(btn_delete)
+
+        right_layout.addStretch()
+
+        main_layout.addWidget(left_widget, 4)
+        main_layout.addWidget(right_panel, 1)
+
         s.load()
 
     def load_suppliers(s):
@@ -558,65 +384,133 @@ class AdminWindow(QMainWindow):
             for sup in suppliers:
                 if sup['supplier']:
                     s.supplier_filter_combo.addItem(sup['supplier'])
-        except Exception as e:
-            print(f"Ошибка загрузки поставщиков: {e}")
+        except:
+            pass
 
     def add_product(s):
-        dialog = ProductDialog(parent=s)
-        if dialog.exec() == QDialog.DialogCode.Accepted:
-            data = dialog.get_product_data()
+        d = QDialog()
+        d.setWindowTitle("Новый товар")
+        d.setModal(True)
+        layout = QVBoxLayout(d)
+
+        name = QLineEdit()
+        name.setPlaceholderText("Название")
+        layout.addWidget(name)
+
+        price = QLineEdit()
+        price.setPlaceholderText("Цена")
+        layout.addWidget(price)
+
+        discount = QLineEdit()
+        discount.setPlaceholderText("Скидка %")
+        layout.addWidget(discount)
+
+        stock = QLineEdit()
+        stock.setPlaceholderText("Количество")
+        layout.addWidget(stock)
+
+        unit = QLineEdit()
+        unit.setPlaceholderText("Ед.изм")
+        unit.setText("шт")
+        layout.addWidget(unit)
+
+        btn = QPushButton("Сохранить")
+
+        def save():
             try:
                 c = db()
                 cur = c.cursor()
-                cur.execute("""
-                    INSERT INTO products (product_name, price, discount, stock, unit, description, image_path, supplier_id, manufacturer_id)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                """, (data['name'], data['price'], data['discount'], data['stock'], data['unit'],
-                      data['description'], data['image_path'], data['supplier_id'], data['manufacturer_id']))
+                cur.execute(
+                    "INSERT INTO products (product_name, price, discount, stock, unit) VALUES (%s, %s, %s, %s, %s)",
+                    (name.text(), float(price.text()), int(discount.text() or 0), int(stock.text()), unit.text()))
                 c.commit()
                 c.close()
-                QMessageBox.information(s, "Успех", "Товар успешно добавлен!")
+                QMessageBox.information(d, "Успех", "Товар добавлен")
+                d.accept()
                 s.load()
-            except Exception as e:
-                QMessageBox.warning(s, "Ошибка", f"Не удалось добавить товар: {e}")
+            except:
+                QMessageBox.warning(d, "Ошибка", "Проверьте данные")
 
-    def edit_product(s, product_id, product_data):
-        dialog = ProductDialog(product_data, parent=s)
-        if dialog.exec() == QDialog.DialogCode.Accepted:
-            data = dialog.get_product_data()
+        btn.clicked.connect(save)
+        layout.addWidget(btn)
+        d.exec()
+
+    def edit_selected(s):
+        if not s.selected_id:
+            QMessageBox.warning(s, "Ошибка", "Выберите товар")
+            return
+
+        d = QDialog()
+        d.setWindowTitle("Редактировать")
+        d.setModal(True)
+        layout = QVBoxLayout(d)
+
+        name = QLineEdit()
+        name.setText(s.selected_name)
+        layout.addWidget(QLabel("Название:"))
+        layout.addWidget(name)
+
+        price = QLineEdit()
+        price.setText(str(s.selected_price))
+        layout.addWidget(QLabel("Цена:"))
+        layout.addWidget(price)
+
+        discount = QLineEdit()
+        discount.setText(str(s.selected_discount))
+        layout.addWidget(QLabel("Скидка %:"))
+        layout.addWidget(discount)
+
+        stock = QLineEdit()
+        stock.setText(str(s.selected_stock))
+        layout.addWidget(QLabel("Количество:"))
+        layout.addWidget(stock)
+
+        unit = QLineEdit()
+        unit.setText(s.selected_unit)
+        layout.addWidget(QLabel("Ед.изм:"))
+        layout.addWidget(unit)
+
+        btn = QPushButton("Сохранить")
+
+        def save():
             try:
                 c = db()
                 cur = c.cursor()
-                cur.execute("""
-                    UPDATE products 
-                    SET product_name=%s, price=%s, discount=%s, stock=%s, unit=%s, 
-                        description=%s, image_path=%s, supplier_id=%s, manufacturer_id=%s
-                    WHERE product_id=%s
-                """, (data['name'], data['price'], data['discount'], data['stock'], data['unit'],
-                      data['description'], data['image_path'], data['supplier_id'], data['manufacturer_id'],
-                      product_id))
+                cur.execute(
+                    "UPDATE products SET product_name=%s, price=%s, discount=%s, stock=%s, unit=%s WHERE product_id=%s",
+                    (name.text(), float(price.text()), int(discount.text() or 0), int(stock.text()), unit.text(),
+                     s.selected_id))
                 c.commit()
                 c.close()
-                QMessageBox.information(s, "Успех", "Товар успешно обновлен!")
+                QMessageBox.information(d, "Успех", "Сохранено")
+                d.accept()
                 s.load()
-            except Exception as e:
-                QMessageBox.warning(s, "Ошибка", f"Не удалось обновить товар: {e}")
+            except:
+                QMessageBox.warning(d, "Ошибка", "Ошибка")
 
-    def delete_product(s, product_id, product_name):
-        reply = QMessageBox.question(s, "Подтверждение",
-                                     f"Вы уверены, что хотите удалить товар '{product_name}'?",
+        btn.clicked.connect(save)
+        layout.addWidget(btn)
+        d.exec()
+
+    def delete_selected(s):
+        if not s.selected_id:
+            QMessageBox.warning(s, "Ошибка", "Выберите товар")
+            return
+
+        reply = QMessageBox.question(s, "Удаление", f"Удалить {s.selected_name}?",
                                      QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
         if reply == QMessageBox.StandardButton.Yes:
             try:
                 c = db()
                 cur = c.cursor()
-                cur.execute("DELETE FROM products WHERE product_id=%s", (product_id,))
+                cur.execute("DELETE FROM order_items WHERE product_id=%s", (s.selected_id,))
+                cur.execute("DELETE FROM products WHERE product_id=%s", (s.selected_id,))
                 c.commit()
                 c.close()
-                QMessageBox.information(s, "Успех", "Товар успешно удален!")
+                s.selected_id = None
                 s.load()
-            except Exception as e:
-                QMessageBox.warning(s, "Ошибка", f"Не удалось удалить товар: {e}")
+            except:
+                QMessageBox.warning(s, "Ошибка", "Не удалось удалить")
 
     def load(s):
         while s.grid.count():
@@ -636,7 +530,6 @@ class AdminWindow(QMainWindow):
                 p.stock,
                 p.unit,
                 p.image_path,
-                p.description,
                 s.supplier_name as supplier,
                 m.manufacturer_name as manufacturer
             FROM products p
@@ -655,47 +548,44 @@ class AdminWindow(QMainWindow):
             query += " AND s.supplier_name = %s"
             params.append(supplier_filter)
 
-        sort_text = s.sort_combo.currentText()
-        if sort_text == "По количеству ↑":
+        if s.sort_combo.currentText() == "По количеству +":
             query += " ORDER BY p.stock ASC"
-        elif sort_text == "По количеству ↓":
+        elif s.sort_combo.currentText() == "По количеству -":
             query += " ORDER BY p.stock DESC"
 
         cur.execute(query, params)
         products = cur.fetchall()
         c.close()
 
-        if not products:
-            lbl = QLabel("Товары не найдены")
-            lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            lbl.setStyleSheet("color: black;")
-            s.grid.addWidget(lbl)
-            return
-
         for p in products:
             card = QFrame()
-            card.setStyleSheet("background:white; border:1px solid #ddd; border-radius:10px; padding:10px; margin:5px;")
+            if s.selected_id == p['product_id']:
+                card.setStyleSheet(
+                    "background:#e3f2fd; border:2px solid #007bff; border-radius:10px; padding:10px; margin:5px;")
+            else:
+                card.setStyleSheet(
+                    "background:white; border:1px solid #ddd; border-radius:10px; padding:10px; margin:5px;")
+
             layout = QHBoxLayout(card)
 
             img = QLabel()
             img.setFixedSize(100, 100)
             img.setAlignment(Qt.AlignmentFlag.AlignCenter)
             img.setStyleSheet("background:#f0f0f0; border:1px solid #ccc; color: black;")
-
             if p.get('image_path') and os.path.exists(p['image_path']):
                 pm = QPixmap(p['image_path'])
                 pm = pm.scaled(100, 100, Qt.AspectRatioMode.KeepAspectRatio)
                 img.setPixmap(pm)
             else:
-                img.setText("НЕТ ФОТО")
+                img.setText("HET ФОТО")
             layout.addWidget(img)
 
             info = QVBoxLayout()
-            info.addWidget(QLabel(f"<b style='color:black;'> {p['name']} </b>"))
-            info.addWidget(QLabel(f"<span style='color:black;'> Поставщик: {p.get('supplier', '-')} </span>"))
-            info.addWidget(QLabel(f"<span style='color:black;'> Производитель: {p.get('manufacturer', '-')} </span>"))
-            info.addWidget(QLabel(f"<span style='color:black;'> В наличии: {p.get('stock', 0)} </span>"))
-            info.addWidget(QLabel(f"<span style='color:black;'> Ед.:{p.get('unit', 'шт')}. </span>"))
+            info.addWidget(QLabel(f"<b style='color:black;'>{p['name']}</b>"))
+            info.addWidget(QLabel(f"<span style='color:black;'>Поставщик: {p.get('supplier', '-')}</span>"))
+            info.addWidget(QLabel(f"<span style='color:black;'>Производитель: {p.get('manufacturer', '-')}</span>"))
+            info.addWidget(
+                QLabel(f"<span style='color:black;'>В наличии: {p.get('stock', 0)} {p.get('unit', 'шт')}</span>"))
             layout.addLayout(info)
 
             right = QVBoxLayout()
@@ -705,35 +595,37 @@ class AdminWindow(QMainWindow):
 
             if discount > 15:
                 right.addWidget(QLabel(f"<b style='background:#dc3545; color:white;'> -{discount}% </b>"))
-                right.addWidget(QLabel(f"<s style='color:black;'>{price:.2f} ₽</s>"))
-                right.addWidget(QLabel(f"<b style='color:red;'>{final_price:.2f} ₽</b>"))
+                right.addWidget(QLabel(f"<s style='color:black;'>{price:.2f} rub</s>"))
+                right.addWidget(QLabel(f"<b style='color:red;'>{final_price:.2f} rub</b>"))
             elif discount > 0:
                 right.addWidget(QLabel(f"<b style='background:#2E8B57; color:white;'>-{discount}%</b>"))
-                right.addWidget(QLabel(f"<s style='color:#2E8B57;'>{price:.2f} ₽</s>"))
-                right.addWidget(QLabel(f"<b style='color:#2E8B57;'>{final_price:.2f} ₽</b>"))
+                right.addWidget(QLabel(f"<s style='color:#2E8B57;'>{price:.2f} rub</s>"))
+                right.addWidget(QLabel(f"<b style='color:#2E8B57;'>{final_price:.2f} rub</b>"))
             else:
-                right.addWidget(QLabel(f"<b style='color:green;'>{price:.2f} ₽</b>"))
-
-            btn_edit = QPushButton("✏️ Редактировать")
-            btn_edit.setStyleSheet('background: #007bff; color: white;')
-            btn_edit.clicked.connect(lambda ch, pid=p['product_id'], data=p: s.edit_product(pid, data))
-            right.addWidget(btn_edit)
-
-            btn_delete = QPushButton("🗑️ Удалить")
-            btn_delete.setStyleSheet('background: #dc3545; color: white;')
-            btn_delete.clicked.connect(lambda ch, pid=p['product_id'], name=p['name']: s.delete_product(pid, name))
-            right.addWidget(btn_delete)
+                right.addWidget(QLabel(f"<b style='color:green;'>{price:.2f} rub</b>"))
 
             layout.addLayout(right)
+
+            card.mousePressEvent = lambda e, pid=p['product_id'], name=p['name'], price=p['price'], discount=p.get('discount', 0), stock=p['stock'], unit=p.get('unit', 'шт'): s.select_product(pid, name, price, discount, stock,unit)
+
             s.grid.addWidget(card)
         s.grid.addStretch()
+
+    def select_product(s, pid, name, price, discount, stock, unit):
+        s.selected_id = pid
+        s.selected_name = name
+        s.selected_price = price
+        s.selected_discount = discount
+        s.selected_stock = stock
+        s.selected_unit = unit
+        s.load()
 
 
 class GuestWindow(QMainWindow):
     def __init__(s, username):
         super().__init__()
         s.username = username
-        s.setWindowTitle(f"Магазин (Гость: {username})")
+        s.setWindowTitle(f"Гость ({username})")
         s.resize(1200, 750)
         w = QWidget()
         s.setCentralWidget(w)
@@ -754,8 +646,7 @@ class GuestWindow(QMainWindow):
 
         c = db()
         cur = c.cursor()
-
-        query = """
+        cur.execute("""
             SELECT 
                 p.product_id,
                 p.product_name as name,
@@ -764,26 +655,14 @@ class GuestWindow(QMainWindow):
                 p.stock,
                 p.unit,
                 p.image_path,
-                p.description,
                 s.supplier_name as supplier,
                 m.manufacturer_name as manufacturer
             FROM products p
             LEFT JOIN suppliers s ON p.supplier_id = s.supplier_id
             LEFT JOIN manufacturers m ON p.manufacturer_id = m.manufacturer_id
-            WHERE 1=1
-        """
-        params = []
-
-        cur.execute(query, params)
+        """)
         products = cur.fetchall()
         c.close()
-
-        if not products:
-            lbl = QLabel("Товары не найдены")
-            lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            lbl.setStyleSheet("color: black;")
-            s.grid.addWidget(lbl)
-            return
 
         for p in products:
             card = QFrame()
@@ -794,21 +673,20 @@ class GuestWindow(QMainWindow):
             img.setFixedSize(100, 100)
             img.setAlignment(Qt.AlignmentFlag.AlignCenter)
             img.setStyleSheet("background:#f0f0f0; border:1px solid #ccc; color: black;")
-
             if p.get('image_path') and os.path.exists(p['image_path']):
                 pm = QPixmap(p['image_path'])
                 pm = pm.scaled(100, 100, Qt.AspectRatioMode.KeepAspectRatio)
                 img.setPixmap(pm)
             else:
-                img.setText("НЕТ ФОТО")
+                img.setText("HET ФОТО")
             layout.addWidget(img)
 
             info = QVBoxLayout()
-            info.addWidget(QLabel(f"<b style='color:black;'> {p['name']} </b>"))
-            info.addWidget(QLabel(f"<span style='color:black;'> Поставщик: {p.get('supplier', '-')} </span>"))
-            info.addWidget(QLabel(f"<span style='color:black;'> Производитель: {p.get('manufacturer', '-')} </span>"))
-            info.addWidget(QLabel(f"<span style='color:black;'> В наличии: {p.get('stock', 0)} </span>"))
-            info.addWidget(QLabel(f"<span style='color:black;'> Ед.:{p.get('unit', 'шт')}. </span>"))
+            info.addWidget(QLabel(f"<b style='color:black;'>{p['name']}</b>"))
+            info.addWidget(QLabel(f"<span style='color:black;'>Поставщик: {p.get('supplier', '-')}</span>"))
+            info.addWidget(QLabel(f"<span style='color:black;'>Производитель: {p.get('manufacturer', '-')}</span>"))
+            info.addWidget(
+                QLabel(f"<span style='color:black;'>В наличии: {p.get('stock', 0)} {p.get('unit', 'шт')}</span>"))
             layout.addLayout(info)
 
             right = QVBoxLayout()
@@ -818,14 +696,14 @@ class GuestWindow(QMainWindow):
 
             if discount > 15:
                 right.addWidget(QLabel(f"<b style='background:#dc3545; color:white;'> -{discount}% </b>"))
-                right.addWidget(QLabel(f"<s style='color:black;'>{price:.2f} ₽</s>"))
-                right.addWidget(QLabel(f"<b style='color:red;'>{final_price:.2f} ₽</b>"))
+                right.addWidget(QLabel(f"<s style='color:black;'>{price:.2f} rub</s>"))
+                right.addWidget(QLabel(f"<b style='color:red;'>{final_price:.2f} rub</b>"))
             elif discount > 0:
                 right.addWidget(QLabel(f"<b style='background:#2E8B57; color:white;'>-{discount}%</b>"))
-                right.addWidget(QLabel(f"<s style='color:#2E8B57;'>{price:.2f} ₽</s>"))
-                right.addWidget(QLabel(f"<b style='color:#2E8B57;'>{final_price:.2f} ₽</b>"))
+                right.addWidget(QLabel(f"<s style='color:#2E8B57;'>{price:.2f} rub</s>"))
+                right.addWidget(QLabel(f"<b style='color:#2E8B57;'>{final_price:.2f} rub</b>"))
             else:
-                right.addWidget(QLabel(f"<b style='color:green;'>{price:.2f} ₽</b>"))
+                right.addWidget(QLabel(f"<b style='color:green;'>{price:.2f} rub</b>"))
 
             layout.addLayout(right)
             s.grid.addWidget(card)
@@ -836,19 +714,302 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     login = Login()
     if login.exec() == QDialog.DialogCode.Accepted:
-        if login.role_id == 1:  # Администратор
+        if login.role_id == 1:
             window = AdminWindow(login.username)
             window.show()
             sys.exit(app.exec())
-        elif login.role_id == 2:  # Менеджер
+        elif login.role_id == 2:
             window = ManagerWindow(login.username)
             window.show()
             sys.exit(app.exec())
-        elif login.role_id == 3 and login.username == "Гость":  # Гость
+        elif login.role_id == 3:
             window = GuestWindow(login.username)
             window.show()
             sys.exit(app.exec())
-        else:  # Обычный клиент
+        else:
             window = ClientWindow(login.username)
             window.show()
             sys.exit(app.exec())
+
+
+-- MySQL Script generated by MySQL Workbench
+-- Tue May 26 18:47:28 2026
+-- Model: New Model    Version: 1.0
+-- MySQL Workbench Forward Engineering
+
+SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
+SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
+SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';
+
+-- -----------------------------------------------------
+-- Schema mydb
+-- -----------------------------------------------------
+-- -----------------------------------------------------
+-- Schema clothe
+-- -----------------------------------------------------
+
+-- -----------------------------------------------------
+-- Schema clothe
+-- -----------------------------------------------------
+CREATE SCHEMA IF NOT EXISTS `clothe` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci ;
+-- -----------------------------------------------------
+-- Schema shop_db_3nf
+-- -----------------------------------------------------
+
+-- -----------------------------------------------------
+-- Schema shop_db_3nf
+-- -----------------------------------------------------
+CREATE SCHEMA IF NOT EXISTS `shop_db_3nf` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci ;
+USE `clothe` ;
+
+-- -----------------------------------------------------
+-- Table `clothe`.`users`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `clothe`.`users` (
+  `user_id` INT NOT NULL AUTO_INCREMENT,
+  `username` VARCHAR(50) NOT NULL,
+  `password_hash` VARCHAR(255) NOT NULL,
+  `role_id` INT NOT NULL,
+  `email` VARCHAR(100) NULL DEFAULT NULL,
+  `created_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`user_id`),
+  UNIQUE INDEX `username` (`username` ASC) VISIBLE)
+ENGINE = InnoDB
+AUTO_INCREMENT = 6
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_0900_ai_ci;
+
+
+-- -----------------------------------------------------
+-- Table `clothe`.`orders`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `clothe`.`orders` (
+  `order_id` INT NOT NULL AUTO_INCREMENT,
+  `user_id` INT NOT NULL,
+  `order_date` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+  `total_amount` DECIMAL(10,2) NOT NULL,
+  `status` VARCHAR(20) NULL DEFAULT 'pending',
+  PRIMARY KEY (`order_id`),
+  INDEX `user_id` (`user_id` ASC) VISIBLE,
+  CONSTRAINT `orders_ibfk_1`
+    FOREIGN KEY (`user_id`)
+    REFERENCES `clothe`.`users` (`user_id`))
+ENGINE = InnoDB
+AUTO_INCREMENT = 9
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_0900_ai_ci;
+
+
+-- -----------------------------------------------------
+-- Table `clothe`.`products`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `clothe`.`products` (
+  `product_id` INT NOT NULL AUTO_INCREMENT,
+  `name` VARCHAR(200) NOT NULL,
+  `supplier` VARCHAR(100) NULL DEFAULT NULL,
+  `manufacturer` VARCHAR(100) NULL DEFAULT NULL,
+  `price` DECIMAL(10,2) NOT NULL,
+  `discount` INT NULL DEFAULT '0',
+  `stock` INT NULL DEFAULT '0',
+  `unit` VARCHAR(20) NULL DEFAULT 'шт',
+  `image_path` VARCHAR(500) NULL DEFAULT NULL,
+  `description` TEXT NULL DEFAULT NULL,
+  `created_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`product_id`))
+ENGINE = InnoDB
+AUTO_INCREMENT = 16
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_0900_ai_ci;
+
+
+-- -----------------------------------------------------
+-- Table `clothe`.`order_items`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `clothe`.`order_items` (
+  `item_id` INT NOT NULL AUTO_INCREMENT,
+  `order_id` INT NOT NULL,
+  `product_id` INT NOT NULL,
+  `quantity` INT NOT NULL,
+  `price_per_item` DECIMAL(10,2) NOT NULL,
+  PRIMARY KEY (`item_id`),
+  INDEX `order_id` (`order_id` ASC) VISIBLE,
+  INDEX `product_id` (`product_id` ASC) VISIBLE,
+  CONSTRAINT `order_items_ibfk_1`
+    FOREIGN KEY (`order_id`)
+    REFERENCES `clothe`.`orders` (`order_id`),
+  CONSTRAINT `order_items_ibfk_2`
+    FOREIGN KEY (`product_id`)
+    REFERENCES `clothe`.`products` (`product_id`))
+ENGINE = InnoDB
+AUTO_INCREMENT = 9
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_0900_ai_ci;
+
+USE `shop_db_3nf` ;
+
+-- -----------------------------------------------------
+-- Table `shop_db_3nf`.`manufacturers`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `shop_db_3nf`.`manufacturers` (
+  `manufacturer_id` INT NOT NULL AUTO_INCREMENT,
+  `manufacturer_name` VARCHAR(255) NOT NULL,
+  PRIMARY KEY (`manufacturer_id`),
+  UNIQUE INDEX `manufacturer_name` (`manufacturer_name` ASC) VISIBLE)
+ENGINE = InnoDB
+AUTO_INCREMENT = 11
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_unicode_ci;
+
+
+-- -----------------------------------------------------
+-- Table `shop_db_3nf`.`roles`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `shop_db_3nf`.`roles` (
+  `role_id` INT NOT NULL AUTO_INCREMENT,
+  `role_name` VARCHAR(50) NOT NULL,
+  PRIMARY KEY (`role_id`),
+  UNIQUE INDEX `role_name` (`role_name` ASC) VISIBLE)
+ENGINE = InnoDB
+AUTO_INCREMENT = 4
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_unicode_ci;
+
+
+-- -----------------------------------------------------
+-- Table `shop_db_3nf`.`users`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `shop_db_3nf`.`users` (
+  `user_id` INT NOT NULL AUTO_INCREMENT,
+  `username` VARCHAR(100) NOT NULL,
+  `password_hash` VARCHAR(255) NOT NULL,
+  `email` VARCHAR(255) NOT NULL,
+  `role_id` INT NOT NULL,
+  `created_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`user_id`),
+  UNIQUE INDEX `username` (`username` ASC) VISIBLE,
+  UNIQUE INDEX `email` (`email` ASC) VISIBLE,
+  INDEX `role_id` (`role_id` ASC) VISIBLE,
+  CONSTRAINT `users_ibfk_1`
+    FOREIGN KEY (`role_id`)
+    REFERENCES `shop_db_3nf`.`roles` (`role_id`))
+ENGINE = InnoDB
+AUTO_INCREMENT = 6
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_unicode_ci;
+
+
+-- -----------------------------------------------------
+-- Table `shop_db_3nf`.`order_statuses`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `shop_db_3nf`.`order_statuses` (
+  `status_id` INT NOT NULL AUTO_INCREMENT,
+  `status_name` VARCHAR(50) NOT NULL,
+  PRIMARY KEY (`status_id`),
+  UNIQUE INDEX `status_name` (`status_name` ASC) VISIBLE)
+ENGINE = InnoDB
+AUTO_INCREMENT = 6
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_unicode_ci;
+
+
+-- -----------------------------------------------------
+-- Table `shop_db_3nf`.`orders`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `shop_db_3nf`.`orders` (
+  `order_id` INT NOT NULL AUTO_INCREMENT,
+  `user_id` INT NOT NULL,
+  `order_date` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `status_id` INT NOT NULL,
+  `total_amount` DECIMAL(10,2) NOT NULL DEFAULT '0.00',
+  PRIMARY KEY (`order_id`),
+  INDEX `user_id` (`user_id` ASC) VISIBLE,
+  INDEX `status_id` (`status_id` ASC) VISIBLE,
+  CONSTRAINT `orders_ibfk_1`
+    FOREIGN KEY (`user_id`)
+    REFERENCES `shop_db_3nf`.`users` (`user_id`),
+  CONSTRAINT `orders_ibfk_2`
+    FOREIGN KEY (`status_id`)
+    REFERENCES `shop_db_3nf`.`order_statuses` (`status_id`))
+ENGINE = InnoDB
+AUTO_INCREMENT = 13
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_unicode_ci;
+
+
+-- -----------------------------------------------------
+-- Table `shop_db_3nf`.`suppliers`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `shop_db_3nf`.`suppliers` (
+  `supplier_id` INT NOT NULL AUTO_INCREMENT,
+  `supplier_name` VARCHAR(255) NOT NULL,
+  PRIMARY KEY (`supplier_id`),
+  UNIQUE INDEX `supplier_name` (`supplier_name` ASC) VISIBLE)
+ENGINE = InnoDB
+AUTO_INCREMENT = 11
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_unicode_ci;
+
+
+-- -----------------------------------------------------
+-- Table `shop_db_3nf`.`products`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `shop_db_3nf`.`products` (
+  `product_id` INT NOT NULL AUTO_INCREMENT,
+  `product_name` VARCHAR(255) NOT NULL,
+  `supplier_id` INT NULL DEFAULT NULL,
+  `manufacturer_id` INT NULL DEFAULT NULL,
+  `price` DECIMAL(10,2) NOT NULL,
+  `discount` INT NULL DEFAULT '0',
+  `stock` INT NOT NULL DEFAULT '0',
+  `unit` VARCHAR(20) NULL DEFAULT NULL,
+  `image_path` VARCHAR(500) NULL DEFAULT NULL,
+  `description` TEXT NULL DEFAULT NULL,
+  PRIMARY KEY (`product_id`),
+  INDEX `supplier_id` (`supplier_id` ASC) VISIBLE,
+  INDEX `manufacturer_id` (`manufacturer_id` ASC) VISIBLE,
+  CONSTRAINT `products_ibfk_1`
+    FOREIGN KEY (`supplier_id`)
+    REFERENCES `shop_db_3nf`.`suppliers` (`supplier_id`),
+  CONSTRAINT `products_ibfk_2`
+    FOREIGN KEY (`manufacturer_id`)
+    REFERENCES `shop_db_3nf`.`manufacturers` (`manufacturer_id`))
+ENGINE = InnoDB
+AUTO_INCREMENT = 12
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_unicode_ci;
+
+
+-- -----------------------------------------------------
+-- Table `shop_db_3nf`.`order_items`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `shop_db_3nf`.`order_items` (
+  `item_id` INT NOT NULL AUTO_INCREMENT,
+  `order_id` INT NOT NULL,
+  `product_id` INT NOT NULL,
+  `quantity` INT NOT NULL,
+  `price_per_item` DECIMAL(10,2) NOT NULL,
+  PRIMARY KEY (`item_id`),
+  INDEX `order_id` (`order_id` ASC) VISIBLE,
+  INDEX `product_id` (`product_id` ASC) VISIBLE,
+  CONSTRAINT `order_items_ibfk_1`
+    FOREIGN KEY (`order_id`)
+    REFERENCES `shop_db_3nf`.`orders` (`order_id`)
+    ON DELETE CASCADE,
+  CONSTRAINT `order_items_ibfk_2`
+    FOREIGN KEY (`product_id`)
+    REFERENCES `shop_db_3nf`.`products` (`product_id`))
+ENGINE = InnoDB
+AUTO_INCREMENT = 13
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_unicode_ci;
+
+
+SET SQL_MODE=@OLD_SQL_MODE;
+SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
+SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
+
+
+
+
+
+            
